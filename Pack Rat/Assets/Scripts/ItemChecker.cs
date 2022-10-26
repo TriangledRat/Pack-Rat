@@ -9,7 +9,7 @@ public class ItemChecker : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.tag == "PickupObject")
+        if(other.tag == "PickupObject" || other.tag == "HoldingObject")
         {
             inRange = true;
             itemInRange = other.gameObject;
@@ -19,7 +19,7 @@ public class ItemChecker : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.tag == "PickupObject")
+        if (other.tag == "PickupObject" || other.tag == "HoldingObject")
         {
             itemInRange = null;
             inRange = false;
