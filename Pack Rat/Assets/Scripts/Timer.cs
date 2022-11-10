@@ -30,7 +30,7 @@ public class Timer : MonoBehaviour
                 Debug.Log("Time is UP!");
                 TimeLeft = 0;
                 TimerOn = false;
-                //SceneManager.LoadScene("TestScene");
+                SceneManager.LoadScene("GameOverScene");
             }
         }
     }

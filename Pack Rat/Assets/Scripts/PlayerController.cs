@@ -18,9 +18,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float throwMagnitude = 100f;
     private CharacterController controller;
     private Camera cam;
-    private bool groundedPlayer, itemRange, holdingItem, climbingRange, climbing;
+    private bool groundedPlayer, itemRange, holdingItem, climbingRange, climbing, dazed, cable;
     private float fallingTimer;
-    private float normalSpeed, slowSpeed;
+    private float normalSpeed, slowSpeed, dazedSpeed;
     private Vector3 velocity;
     private float gravity = Physics.gravity.y;
     float currentAngle;
@@ -49,6 +49,7 @@ public class PlayerController : MonoBehaviour
         cam = Camera.main;
         normalSpeed = movementSpeed;
         slowSpeed = normalSpeed / 2;
+        dazedSpeed = normalSpeed/4;
         style = new GUIStyle();
         style.fontSize = 15;
         style.normal.textColor = Color.black;
@@ -71,10 +72,12 @@ public class PlayerController : MonoBehaviour
         if(hit.transform.tag == "Cablesurface")
         {
             movementSpeed = cableSpeed;
+            cable = true;
         }
         else
         {
             movementSpeed = normalSpeed;
+            cable = false;
         }
 
     }
@@ -82,6 +85,10 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKey(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
 
 
         //UnityEngine.Debug.Log(movementSpeed);
@@ -99,7 +106,7 @@ public class PlayerController : MonoBehaviour
         {
             movementSpeed = slowSpeed;
         }
-        else
+        if(holdingItem == false && dazed == false && cable == false)
         {
             movementSpeed = normalSpeed;
         }
@@ -147,6 +154,7 @@ public class PlayerController : MonoBehaviour
             //move in direction of rotation
             Vector3 rotatedMovement = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
             controller.Move(rotatedMovement * movementSpeed * Time.deltaTime);
+
         }
         FallingCheck();
         CarryingItem();
@@ -195,11 +203,12 @@ public class PlayerController : MonoBehaviour
         {
             fallingTimer = 0f;
         }
-
+        
         if (groundedPlayer && fallingTimer > fallingChecker)
         {
             dazeCooldown -= Time.deltaTime;
-            movementSpeed = slowSpeed;
+            movementSpeed = dazedSpeed;
+            dazed = true;
         }
 
         if (dazeCooldown < 0f)
@@ -207,7 +216,9 @@ public class PlayerController : MonoBehaviour
             movementSpeed = normalSpeed;
             fallingTimer = 0f;
             dazeCooldown = 5f;
+            dazed = false;
         }
+        
     }
 
     private void CarryingItem()
@@ -217,18 +228,24 @@ public class PlayerController : MonoBehaviour
             //add a checker component and disable the component that is the trigger detection for this specific instance? will that stop overriding the other input?
             pickedUpObject = checker.itemInRange;
             checker.enabled = false;
+            pickedUpObject.gameObject.GetComponent<Rigidbody>().isKinematic = true;
+            pickedUpObject.transform.position = holdingLocation.transform.position;
+            pickedUpObject.transform.parent = GameObject.Find("HoldingLocation").transform;
+            /*/
             pickedUpObject.gameObject.GetComponent<Rigidbody>().useGravity = false;
             pickedUpObject.transform.position = holdingLocation.transform.position;
             pickedUpObject.transform.parent = GameObject.Find("HoldingLocation").transform;
             pickedUpObject.gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            /*/
             labelText = "Release LeftMouse to drop, RightMouse to throw";
             holdingItem = true;            
         }
         else if (holdingItem && Input.GetMouseButton(1))
         {
             pickedUpObject.transform.parent = null;
+            pickedUpObject.gameObject.GetComponent<Rigidbody>().isKinematic = false;
             pickedUpObject.GetComponent<Rigidbody>().AddForce(transform.forward * throwMagnitude);
-            pickedUpObject.gameObject.GetComponent<Rigidbody>().useGravity = true;
+            //pickedUpObject.gameObject.GetComponent<Rigidbody>().useGravity = true;
             pickedUpObject = null;
             holdingItem = false;
             labelText = "";
@@ -237,7 +254,8 @@ public class PlayerController : MonoBehaviour
         if (holdingItem && Input.GetMouseButtonUp(0))
         {            
             pickedUpObject.transform.parent = null;
-            pickedUpObject.gameObject.GetComponent<Rigidbody>().useGravity = true;
+            pickedUpObject.gameObject.GetComponent<Rigidbody>().isKinematic = false;
+            //pickedUpObject.gameObject.GetComponent<Rigidbody>().useGravity = true;
             pickedUpObject = null;
             holdingItem = false;
             labelText = "";
@@ -248,8 +266,10 @@ public class PlayerController : MonoBehaviour
 
     private void OnGUI()
     {
-        Rect rect = new Rect(0, 403, Screen.width, 120);
+        Rect rect = new Rect(0, Screen.height-100, Screen.width, 120);
+        Rect rect2 = new Rect(Screen.width / 2 -100, -45, Screen.width, 120);
         GUI.Label(rect, labelText, style);
+        GUI.Label(rect2, "MvmntSp: " + movementSpeed.ToString(), style);
         
     }
 

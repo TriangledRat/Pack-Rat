@@ -20,6 +20,8 @@ public class UIText : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        itemRange = checker.inRange;
+        
 
         if (climbing)
         {
